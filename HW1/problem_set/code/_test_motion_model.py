@@ -42,28 +42,28 @@ def test_motion_model():
             'name' : 'Moving forward',
             'u_t0' : np.array([0, 0, 0]),
             'u_t1' : np.array([1, 0, 0]),
-            'x_t0' : np.array([0, 0, 0])
+            'x_t0' : np.array([0, 0, 0]),
             'expected' : np.array([1, 0, 0])
         },
         {
             'name' : 'Rotating in place',
             'u_t0' : np.array([0, 0, 0]),
             'u_t1' : np.array([0, 0, np.pi/2]),
-            'x_t0' : np.array([1, 1, 0])
+            'x_t0' : np.array([1, 1, 0]),
             'expected' : np.array([1, 1, np.pi/2])
         },
         {
-            'name' : 'Moving forward',
+            'name' : 'Moving diagonally',
             'u_t0' : np.array([0, 0, 0]),
             'u_t1' : np.array([1, 1, np.pi/4]),
-            'x_t0' : np.array([0, 0, 0])
+            'x_t0' : np.array([0, 0, 0]),
             'expected' : np.array([np.sqrt(2), np.sqrt(2), np.pi/4])
         },
         {
-            'name' : 'Moving forward',
+            'name' : 'Complex Motion',
             'u_t0' : np.array([1, 1, np.pi/4]),
             'u_t1' : np.array([2, 3, np.pi/2]),
-            'x_t0' : np.array([0, 0, 0])
+            'x_t0' : np.array([0, 0, 0]),
             'expected' : np.array([2, 3, np.pi/2])
         }
     ]
