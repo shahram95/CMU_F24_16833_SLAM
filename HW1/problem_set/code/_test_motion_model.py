@@ -33,7 +33,40 @@ def test_motion_model():
     This function defines the test cases to evaluate the performance of the motion 
     model under different movement conditions
     '''
-    pass
+    model = MotionModel()
+    num_runs = 1000
+
+    # Test case definitetion [To-Do: Incorporate code to read in json format]
+    test_cases = [
+        {
+            'name' : 'Moving forward',
+            'u_t0' : np.array([0, 0, 0]),
+            'u_t1' : np.array([1, 0, 0]),
+            'x_t0' : np.array([0, 0, 0])
+            'expected' : np.array([1, 0, 0])
+        },
+        {
+            'name' : 'Rotating in place',
+            'u_t0' : np.array([0, 0, 0]),
+            'u_t1' : np.array([0, 0, np.pi/2]),
+            'x_t0' : np.array([1, 1, 0])
+            'expected' : np.array([1, 1, np.pi/2])
+        },
+        {
+            'name' : 'Moving forward',
+            'u_t0' : np.array([0, 0, 0]),
+            'u_t1' : np.array([1, 1, np.pi/4]),
+            'x_t0' : np.array([0, 0, 0])
+            'expected' : np.array([np.sqrt(2), np.sqrt(2), np.pi/4])
+        },
+        {
+            'name' : 'Moving forward',
+            'u_t0' : np.array([1, 1, np.pi/4]),
+            'u_t1' : np.array([2, 3, np.pi/2]),
+            'x_t0' : np.array([0, 0, 0])
+            'expected' : np.array([2, 3, np.pi/2])
+        }
+    ]
 
 if __name__ == "__main__":
     test_motion_model()
