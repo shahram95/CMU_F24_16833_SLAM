@@ -35,4 +35,25 @@ class MotionModel:
         """
         TODO : Add your code here
         """
-        return np.random.rand(3)
+        # calculate relative motion
+        rot1 = np.arctan2(u_t1[1] - u_t0[1], u_t1[0] - u_t0[0]) - u_t0[2]
+        trans = np.sqrt((u_t1[0] - u_t0[0])**2 + (u_t1[1] - u_t0[1])**2)
+        rot2 = u_t1[2] - u_t0[2] - rot1
+
+        # Add noise
+
+        noise_rot1 = np.sqrt(self._alpha1 * rot1**2 + self._alpha2 * trans**2)
+        noise_trans = np.sqrt(self._alpha3 * trans**2 + self._alpha4 * (rot1**2 + rot2**2))
+        noise_rot2 = np.sqrt(self._alpha1 * rot2**2 + self._alpha2 * trans**2)
+
+        rot1_with_noise = rot1 + np.random.normal(0, noise_rot1)
+        trans_with_noise = trans + np.random.normal(0, noise_trans)
+        rot2_with_noise = rot2 + np.random.normal(0, noise_rot2)
+
+        # Calculate new state
+        x_t1 = np.zeros(3)
+        x_t1[0] - x_t0[0] + trans_with_noise * np.cos(x_t0[2] + rot1_with_noise)
+        x_t1[0] = x_t0[1] + trans_with_noise * np.sin(x_t0[2] + rot1_with_noise)
+        x_t1[2] = x_t0[2] + rot1_with_noise + rot2_with_noise
+
+        return x_t1
