@@ -73,5 +73,19 @@ def test_motion_model():
         print(f"Input: u_t0 = {case['u_t0']}, u_t1 = {case['u_t1']}, x_t0 = {case['x_t0']}")
         print(f"Expected: {case['expected']}")
 
+        # Run the test case multiple times to gather data
+        results = run_test_case(model, case['u_t0'], case['u_t1'], case['x_t0'], num_runs)
+        mean, std = np.mean(results, axis=0), np.std(result, axis=0)
+
+        print(f"Mean output: {mean}")
+        print(f"Standard deviation: {std}")
+
+        # Calculate absolute error
+        error = np.abs(mean - case['expected'])
+        print(f"absolute error: {error}")
+
+        # Visualize
+        visualize_results(results, case['expected'], case['name'])
+
 if __name__ == "__main__":
     test_motion_model()
