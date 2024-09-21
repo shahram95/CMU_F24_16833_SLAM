@@ -68,5 +68,10 @@ def test_motion_model():
         }
     ]
 
+    for case in test_cases:
+        print(f"\nTest Case: {case['name']}")
+        print(f"Input: u_t0 = {case['u_t0']}, u_t1 = {case['u_t1']}, x_t0 = {case['x_t0']}")
+        print(f"Expected: {case['expected']}")
+
 if __name__ == "__main__":
     test_motion_model()
