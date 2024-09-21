@@ -24,7 +24,7 @@ def visualize_results(results, expected, title):
         expected (np.array): Expected results [x, y, theta]
         title (str): Title for the plot
     '''
-    fig, axs = plt.subplot(2, 2, figsize=(15,15))
+    fig, axs = plt.subplots(2, 2, figsize=(15,15))
     labels = ['x', 'y', 'theta']
 
     # Histograms of PDF
