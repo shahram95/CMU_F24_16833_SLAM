@@ -24,7 +24,29 @@ def visualize_results(results, expected, title):
         expected (np.array): Expected results [x, y, theta]
         title (str): Title for the plot
     '''
-    pass
+    fig, axs = plt.subplot(2, 2, figsize=(15,15))
+    labels = ['x', 'y', 'theta']
+
+    # Histograms of PDF
+    for i in range(3):
+        row, col = divmod(i, 2)
+        axs[row, col].hist(results[:, i], bins=50, alpha=0.7)
+        axs[row, col].axvline(expected[i], color='r', linestyle='dashed', linewidth=2)
+        axs[row, col].set_title(f'{labels[i]} distribution')
+        axs[row, col].set_xlabel(labels[i])
+        axs[row, col].set_ylabel('Frequency')
+    
+    axs[1, 1].scatter(results[:, 0], results[:, 1], alpha=0.5)
+    axs[1, 1].scatter(expected[0], expected[1], color='r', s=100, marker='x')
+    axs[1, 1].set_title('Particle Distribution after Motion')
+    axs[1, 1].set_xlabel('X')
+    axs[1, 1].set_ylabel('Y')
+    axs[1, 1].axis('equal')
+
+    plt.suptitle(title)
+    plt.tight_layout()
+    plt.show()
+    
 
 def test_motion_model():
     '''
