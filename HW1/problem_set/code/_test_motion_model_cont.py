@@ -1,5 +1,6 @@
 # Add relevant libraries
 import numpy as np
+import matplotlib.pyplot as plt
 
 def generate_circular_path(center, radius, num_points):
     theta = np.linspace(0, 2*np.pi, num_points)
@@ -22,6 +23,22 @@ def calculate_heading(path):
 def test_motion_model():
     pass
 
+def test_gt_plot(path_func, path_args, path_name):
+    path = path_func(*path_args)
 
-if __name__ == "main":
-    pass
+    plt.figure(figsize=(8,8))
+    plt.plot(path[:, 0], path[:, 1], 'b-')
+    plt.scatter(path[0, 0], path[0, 1], color='g', s=100, label='Start')
+    plt.scatter(path[-1, 0], path[-1, 1], color='r', s=100, label='End')
+    plt.title(f'Ground Truth: {path_name}')
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.legend()
+    plt.axis('equal')
+    plt.grid(True)
+    plt.show()
+
+if __name__ == "__main__":
+    num_points = 100
+
+    test_gt_plot(generate_circular_path, ([0, 0], 5, num_points), "Circular Path")
