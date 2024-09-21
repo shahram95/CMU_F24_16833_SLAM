@@ -75,7 +75,7 @@ def test_motion_model():
 
         # Run the test case multiple times to gather data
         results = run_test_case(model, case['u_t0'], case['u_t1'], case['x_t0'], num_runs)
-        mean, std = np.mean(results, axis=0), np.std(result, axis=0)
+        mean, std = np.mean(results, axis=0), np.std(results, axis=0)
 
         print(f"Mean output: {mean}")
         print(f"Standard deviation: {std}")
