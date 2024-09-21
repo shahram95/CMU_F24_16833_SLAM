@@ -13,7 +13,7 @@ def run_test_case(model, u_t0, u_t1, x_t0, num_runs=1000):
         x_t0 (np.array): Initial state belief [x, y, theta]
         num_runs (int): Number of time to run the test
     '''
-    pass
+    return np.array([model.update(u_t0, u_t1, x_t0) for _ in range(num_runs)])
 
 def visualize_results(results, expected, title):
     '''
