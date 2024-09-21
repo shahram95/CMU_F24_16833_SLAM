@@ -52,8 +52,8 @@ class MotionModel:
 
         # Calculate new state
         x_t1 = np.zeros(3)
-        x_t1[0] - x_t0[0] + trans_with_noise * np.cos(x_t0[2] + rot1_with_noise)
-        x_t1[0] = x_t0[1] + trans_with_noise * np.sin(x_t0[2] + rot1_with_noise)
+        x_t1[0] = x_t0[0] + trans_with_noise * np.cos(x_t0[2] + rot1_with_noise)
+        x_t1[1] = x_t0[1] + trans_with_noise * np.sin(x_t0[2] + rot1_with_noise)
         x_t1[2] = x_t0[2] + rot1_with_noise + rot2_with_noise
 
         return x_t1
