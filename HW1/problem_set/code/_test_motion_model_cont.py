@@ -8,8 +8,11 @@ def generate_circular_path(center, radius, num_points):
     y = center[1] + radius * np.sin(theta)
     return np.column_stack((x, y))
 
-def generate_straight_line_path():
-    pass
+def generate_straight_line_path(start, end, num_points):
+    t = np.linspace(0, 1, num_points)
+    x = start[0] + t * (end[0] - start[0])
+    y = start[1] + t * (end[1] - start[1])
+    return np.column_stack((x,y))
 
 def generate_figure_eight_path():
     pass
@@ -41,4 +44,5 @@ def test_gt_plot(path_func, path_args, path_name):
 if __name__ == "__main__":
     num_points = 100
 
-    test_gt_plot(generate_circular_path, ([0, 0], 5, num_points), "Circular Path")
+    #test_gt_plot(generate_circular_path, ([0, 0], 5, num_points), "Circular Path")
+    test_gt_plot(generate_straight_line_path, ([-5, -5], [5, 5], num_points), "Straight Line Path")
