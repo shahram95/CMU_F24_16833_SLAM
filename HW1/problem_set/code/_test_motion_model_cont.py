@@ -14,11 +14,22 @@ def generate_straight_line_path(start, end, num_points):
     y = start[1] + t * (end[1] - start[1])
     return np.column_stack((x,y))
 
-def generate_figure_eight_path():
-    pass
+def generate_figure_eight_path(center, size, num_points):
+    t = np.linspace(0, 2*np.pi, num_points)
+    x = center[0] + size * np.sin(t)
+    y = center[1] + size/2 * np.sin(t) * np.cos(t)
+    return np.column_stack((x,y))
 
-def generate_square_path():
-    pass
+def generate_square_path(center, side_length, num_points):
+    points_per_side = num_points // 4
+    side = np.linspace(-side_length/2, side_length/2, points_per_side)
+    top = np.column_stack((side, np.full(points_per_side, side_length/2)))
+    right = np.column_stack((np.full(points_per_side, side_length/2), side[::-1]))
+    bottom = np.column_stack((side[::-1]. np.full(points_per_side, -side_length/2)))
+    left = np.column_stack((np.full(points_per_side, -side_length/2), side))
+    square = np.vstack((top, right, bottom, left))
+    return square + center
+    
 
 def calculate_heading(path):
     pass
@@ -45,4 +56,6 @@ if __name__ == "__main__":
     num_points = 100
 
     #test_gt_plot(generate_circular_path, ([0, 0], 5, num_points), "Circular Path")
-    test_gt_plot(generate_straight_line_path, ([-5, -5], [5, 5], num_points), "Straight Line Path")
+    #test_gt_plot(generate_straight_line_path, ([-5, -5], [5, 5], num_points), "Straight Line Path")
+    #test_gt_plot(generate_figure_eight_path, ([0, 0], 5, num_points), "Figure-Eight Path")
+    test_gt_plot(generate_square_path, ([0, 0], 10, num_points), "Square Path")
