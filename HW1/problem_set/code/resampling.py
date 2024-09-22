@@ -16,6 +16,7 @@ class Resampling:
         """
         TODO : Initialize resampling process parameters here
         """
+        # Noen neede for this method
 
     def multinomial_sampler(self, X_bar):
         """
@@ -25,7 +26,15 @@ class Resampling:
         """
         TODO : Add your code here
         """
-        X_bar_resampled =  np.zeros_like(X_bar)
+        num_particles = X_bar.shape[0]
+        weights = X_bar[:, 3]
+        normalized_weights = weights / np.sum(weights)
+
+        resampled_indices = np.random.multinomial(num_particles, normalized_weights)
+
+        X_bar_resampled =  np.repeat(X_bar, resampled_indices, axis=0)
+        X_bar_resampled[:, 3] = 1.0 / num_particles
+        
         return X_bar_resampled
 
     def low_variance_sampler(self, X_bar):
