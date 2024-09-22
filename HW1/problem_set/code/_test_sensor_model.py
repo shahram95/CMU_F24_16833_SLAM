@@ -98,7 +98,7 @@ class InteractiveSensorModel:
     def simulate_laser_scan(self, max_range=1000, num_beams=180):
         z_t1_arr = np.full(num_beams, max_range)
         for i in range(num_beams):
-            angle = self.theta + np.randians(i - 90)
+            angle = self.theta + np.radians(i - 90)
             for r in range(0, max_range, 10):
                 x_end = self.x + r * np.cos(angle)
                 y_end = self.y + r * np.sin(angle)
