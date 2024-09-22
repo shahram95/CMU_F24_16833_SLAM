@@ -46,18 +46,80 @@ class InteractiveSensorModel:
 
         self.update(None)
 
-    def update(self):
-        pass
+    def update(self, val):
+        x = self.slider_x.val
+        y = self.slider_y.val
+        theta = self.slider_theta.val
+        
+        # Check if the new position is in free space
+        x_cell, y_cell = int(x / 10), int(y / 10)
+        if 0 <= x_cell < self.occupancy_map.shape[1] and 0 <= y_cell < self.occupancy_map.shape[0]:
+            if self.occupancy_map[y_cell, x_cell] == 0:
+                self.x, self.y, self.theta = x, y, theta
+        
+        self.robot_plot.set.data([self.x/10], [self.y/10])
 
-    def reset(self):
-        pass
+        # Simulate laser scan
+        z_t1_arr = self.simulate_laser_scan()
 
-    def simulate_laser_scan(self):
-        pass
+        # Compute probability using sensor model
+        prob = self.sensor_model.beam_range_finder_model(z_t1_arr, [self.x, self.y, self.theta])
 
-    def format_prob(self):
-        pass
+        # Update title with probability
+        self.ax.set_title(f"Interactive Sensor Model - Probability: {self.format_prob(prob)}")
 
+        # Update laser visualization
+        for line in self.laser_lines:
+            line.remove
+        self.laser_lines.clear()
+
+        for i in range(0, 180, 5):
+            angle = self.theta + np.radians(i - 90)
+            end_x = self.x + z_t1_arr[i] * np.cos(angle)
+            end_y = self.y + z_t1_arr[i] * np.sin(angle)
+            line, = self.ax.plot([self.x/10, end_x/10], [self.y/10, end_y/10], 'g-', alpha=0.1)
+            self.laser_lines.append(line)
+        
+        self.fig.canvas.draw_idle()
+
+    def reset(self, event):
+        free_space = np.where(self.occupancy_map == 0)
+        init_idx = np.random.randint(0, len(free_space[0]))
+        self.x = free_space[1][init_idx] * 10
+        self.y = free_space[0][init_idx] * 10
+        self.theta = 0
+
+        self.slider_x.reset()
+        self.slider_y.reser()
+        self.slider_theta.reser()
+
+        self.update(None)
+
+    def simulate_laser_scan(self, max_range=1000, num_beams=180):
+        z_t1_arr = np.full(num_beams, max_range)
+        for i in range(num_beams):
+            angle = self.theta + np.randians(i - 90)
+            for r in range(0, max_range, 10):
+                x_end = self.x + r * np.cos(angle)
+                y_end = self.y + r * np.sin(angle)
+                x_cell, y_cell = int(x_end / 10), int(y_end / 10)
+                if (x_cell < 0 or x_cell >= self.occupancy_map.shape[1] or
+                    y_cell < 0 or y_cell >= self.occupancy_map.shape[0] or
+                    self.occupancy_map[y_cell, x_cell] > 0.5):
+                    z_t1_arr[i] = r
+                    break
+        return z_t1_arr
+
+    def format_prob(self, prob):
+        if isinstance(prob, np.ndarray):
+            return ', '.join(f'{p:.2e}' for p in prob.flat)
+        elif isinstance(prob, (list, tuple)):
+            return ', '.join(f'p:.2e' for p in prob)
+        else:
+            return f'{prob:.2e}'
+    
+    def show(self):
+        plt.show()
 
 if __name__ == "__main__":
     map_path = '../data/map/wean.dat'
