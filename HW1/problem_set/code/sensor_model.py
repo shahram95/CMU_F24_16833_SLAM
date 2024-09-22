@@ -14,7 +14,14 @@ from map_reader import MapReader
 
 
 def occupancy(x, res, occ_map):
-    pass
+    x_idx = int(math.floor(x[0] / res ))
+    y_idx = int(math.floor(x[1] / res ))
+    return occ_map[y_idx, x_idx]
+
+def check_bounds(coord, res, map_size):
+    x_idx = math.floor(coord[0] / res)
+    y_idx = math.floor(coord[1] / res)
+    return (0 <= x_idx < map_size) and (0 <= y_idx < map_size)
 
 class SensorModel:
     """
