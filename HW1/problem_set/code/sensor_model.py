@@ -53,6 +53,7 @@ class SensorModel:
         # Definitions
         self.map = occupancy_map
         self.map_size = occupancy_map.shape[0]
+        self.map_height, self.map_width = occupancy_map.shape
         self.resolution = 10
         self.offset = 25
     
@@ -104,6 +105,64 @@ class SensorModel:
             beam_angle = theta + math.radians(i - 90)
             expected_range = self.ray_cast(laser_x, laser_y, beam_angle)
             beam_prob = self.calculate_probability(expected_range, measured_range)
-            prob_zt1 *- beam_prob if beam_prob > 0 else 1e-300
+            prob_zt1 *= beam_prob if beam_prob > 0 else 1e-300
 
         return prob_zt1
+
+    def ray_casting_vectorized(self, start_x, start_y, angle):
+        x_map, y_map = int(start_x / self.resolution), int(start_y / self.resolution)
+
+        if not self._is_in_map(x_map, y_map):
+            return self._max_range
+
+        cos_theta, sin_theta = np.cos(angle), np.sin(angle)
+        for r in range(0, self._max_range, 10):
+            end_x = start_x + r * cos_theta
+            end_y = start_y + r * sin_theta
+
+            x_map_end, y_map_end = int(end_x / self.resolution), int(end_y / self.resolution)
+
+            if not self._is_in_map(x_map_end, y_map_end):
+                return r
+            
+            if self.map[y_map_end, x_map_end] > self._min_probability:
+                return r
+        
+        return self._max_range
+    
+    def _is_in_map(self,x,y):
+        return 0 <= x < self.map_width and 0 <= y < self.map_height
+    
+    def beam_range_finder_model_vectorized(self, z_t1_arr, x_t1):
+        """
+        Calculate the likelihood of a range scan at time t.
+        
+        Args:
+            z_t1_arr : laser range readings [array of 180 values] at time t
+            x_t1 : particle state belief [x, y, theta] at time t [world_frame]
+        
+        Returns:
+            float: Likelihood of a range scan zt1 at time t
+        """
+        x, y, theta = x_t1
+        
+        laser_x = x + self.offset * np.cos(theta)
+        laser_y = y + self.offset * np.sin(theta)
+        
+        log_prob = 0.0
+        
+        for i in range(0, 180, self._subsampling):
+            z = z_t1_arr[i]
+            angle = theta + np.radians(i - 90)
+            z_star = self.ray_casting_vectorized(laser_x, laser_y, angle)
+            
+            p_hit = self._z_hit * norm.pdf(z, z_star, self._sigma_hit)
+            p_short = self._z_short * self._lambda_short * np.exp(-self._lambda_short * z) if z <= z_star else 0
+            p_max = self._z_max if z >= self._max_range else 0
+            p_rand = self._z_rand / self._max_range if z < self._max_range else 0
+            
+            p = p_hit + p_short + p_max + p_rand
+            
+            log_prob += np.log(max(p, 1e-300))  # Avoid log(0)
+        
+        return np.exp(log_prob)

@@ -63,7 +63,7 @@ class InteractiveSensorModel:
         z_t1_arr = self.simulate_laser_scan()
 
         # Compute probability using sensor model
-        prob = self.sensor_model.beam_range_finder_model(z_t1_arr, [self.x, self.y, self.theta])
+        prob = self.sensor_model.beam_range_finder_model_vectorized(z_t1_arr, [self.x, self.y, self.theta])
 
         # Update title with probability
         self.ax.set_title(f"Interactive Sensor Model - Probability: {self.format_prob(prob)}")
@@ -73,7 +73,7 @@ class InteractiveSensorModel:
             line.remove()
         self.laser_lines.clear()
 
-        for i in range(0, 180, 5):
+        for i in range(0, 180, 1):
             angle = self.theta + np.radians(i - 90)
             end_x = self.x + z_t1_arr[i] * np.cos(angle)
             end_y = self.y + z_t1_arr[i] * np.sin(angle)
