@@ -5,7 +5,7 @@ from map_reader import MapReader
 from sensor_model import SensorModel
 
 class InteractiveSensorModel:
-    def __init(self, map_path):
+    def __init__(self, map_path):
         self.map_reader = MapReader(map_path)
         self.occupancy_map = self.map_reader.get_map()
         self.sensor_model = SensorModel(self.occupancy_map)
@@ -57,7 +57,7 @@ class InteractiveSensorModel:
             if self.occupancy_map[y_cell, x_cell] == 0:
                 self.x, self.y, self.theta = x, y, theta
         
-        self.robot_plot.set.data([self.x/10], [self.y/10])
+        self.robot_plot.set_data([self.x/10], [self.y/10])
 
         # Simulate laser scan
         z_t1_arr = self.simulate_laser_scan()
@@ -70,7 +70,7 @@ class InteractiveSensorModel:
 
         # Update laser visualization
         for line in self.laser_lines:
-            line.remove
+            line.remove()
         self.laser_lines.clear()
 
         for i in range(0, 180, 5):
@@ -90,8 +90,8 @@ class InteractiveSensorModel:
         self.theta = 0
 
         self.slider_x.reset()
-        self.slider_y.reser()
-        self.slider_theta.reser()
+        self.slider_y.reset()
+        self.slider_theta.reset()
 
         self.update(None)
 
@@ -114,7 +114,7 @@ class InteractiveSensorModel:
         if isinstance(prob, np.ndarray):
             return ', '.join(f'{p:.2e}' for p in prob.flat)
         elif isinstance(prob, (list, tuple)):
-            return ', '.join(f'p:.2e' for p in prob)
+            return ', '.join(f'{p:.2e}' for p in prob)
         else:
             return f'{prob:.2e}'
     
