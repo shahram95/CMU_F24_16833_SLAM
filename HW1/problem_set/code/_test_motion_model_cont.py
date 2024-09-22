@@ -25,7 +25,7 @@ def generate_square_path(center, side_length, num_points):
     side = np.linspace(-side_length/2, side_length/2, points_per_side)
     top = np.column_stack((side, np.full(points_per_side, side_length/2)))
     right = np.column_stack((np.full(points_per_side, side_length/2), side[::-1]))
-    bottom = np.column_stack((side[::-1]. np.full(points_per_side, -side_length/2)))
+    bottom = np.column_stack((side[::-1], np.full(points_per_side, -side_length/2)))
     left = np.column_stack((np.full(points_per_side, -side_length/2), side))
     square = np.vstack((top, right, bottom, left))
     return square + center
