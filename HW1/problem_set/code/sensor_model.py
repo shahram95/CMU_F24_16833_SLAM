@@ -49,9 +49,29 @@ class SensorModel:
 
         # Used in sampling angles in ray casting
         self._subsampling = 2
+
+        # Definitions
+        self.map = occupancy_map
+        self.map_size = occupancy_map.shape[0]
+        self.resolution = 10
+        self.offset = 25
     
-    def ray_cast(self):
-        pass
+    def ray_cast(self, start_x, start_y, angle):
+        end_x = start_x
+        end_y = start_y
+        x_idx = int(round(end_x/self.resolution))
+        y_idx = int(round(end_y/self.resolution))
+
+        cell_value = occupancy([x_idx, y_idx], self.resolution, self.map)
+        while check_bounds([x_idx, y_idx], self.resolution, self.map_size) and cell_value < self._min_probability:
+            cell_value = occupancy([x_idx, y_idx], self.resolution, self.map)
+            end_x += 8 * math.cos(angle)
+            end_y += 8 * math.sin(angle)
+            x_idx = int(round(end_x/self.resolution))
+            y_idx = int(round(end_y/self.resolution))
+        
+        distance = math.sqrt((start_x-end_x)**2 + (start_y-end_y)**2)
+        return distance
 
     def beam_range_finder_model(self, z_t1_arr, x_t1):
         """
