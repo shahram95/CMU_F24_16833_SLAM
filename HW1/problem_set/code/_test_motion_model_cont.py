@@ -72,7 +72,7 @@ def test_motion_model(path_func, path_args, path_name):
 
     avg_position_error = np.mean(position_error)
     max_position_error = np.max(position_error)
-    avg_heading_error = np.mean(heading error)
+    avg_heading_error = np.mean(heading_error)
     max_heading_error = np.max(heading_error)
 
     print(f"\nResults for {path_name}:")
