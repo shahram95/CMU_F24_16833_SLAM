@@ -73,6 +73,18 @@ class SensorModel:
         distance = math.sqrt((start_x-end_x)**2 + (start_y-end_y)**2)
         return distance
 
+    def calculate_probability(self, expected, measured):
+        total_prob = 0
+
+        if measured >= 0:
+            hit_prob = self._z_hit * norm.pdf(measured, expected, self._sigma_hit) if 0 <= measured <= self._max_range else 0
+            short_prob = self._z_short * self._lambda_short * math.exp(-self._lambda_short * measured) if 0 <= measured <= expected else 0
+            max_prob = self._z_max if measured >= self._max_range -5 else 0
+            rand_prob = self._z_rand / self._max_range if measured < self._max_range else 0
+            total_prob = hit_prob + short_prob + max_prob + rand_prob
+        
+        return total_prob
+
     def beam_range_finder_model(self, z_t1_arr, x_t1):
         """
         param[in] z_t1_arr : laser range readings [array of 180 values] at time t
@@ -83,4 +95,15 @@ class SensorModel:
         TODO : Add your code here
         """
         prob_zt1 = 1.0
+        x, y, theta = x_t1
+        laser_x = x + self.offset * math.cos(theta)
+        laser_y = y + self.offset * math.sin(theta)
+
+        for i in range(0, 180, self._subsampling):
+            measured_range = z_t1_arr[i]
+            beam_angle = theta + math.radians(i = 90)
+            expected_range = self.ray_cast(laser_x, laser_y, beam_angle)
+            beam_prob = self.calculate_probability(expected_range, measured_range)
+            prob_zt1 *- beam_prob if beam_prob > 0 else 1e-300
+            
         return prob_zt1
