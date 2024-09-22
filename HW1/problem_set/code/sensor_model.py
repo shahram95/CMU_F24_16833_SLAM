@@ -13,6 +13,9 @@ from scipy.stats import norm
 from map_reader import MapReader
 
 
+def occupancy(x, res, occ_map):
+    pass
+
 class SensorModel:
     """
     References: Thrun, Sebastian, Wolfram Burgard, and Dieter Fox. Probabilistic robotics. MIT press, 2005.
@@ -39,6 +42,9 @@ class SensorModel:
 
         # Used in sampling angles in ray casting
         self._subsampling = 2
+    
+    def ray_cast(self):
+        pass
 
     def beam_range_finder_model(self, z_t1_arr, x_t1):
         """
