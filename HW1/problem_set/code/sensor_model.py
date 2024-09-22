@@ -101,9 +101,9 @@ class SensorModel:
 
         for i in range(0, 180, self._subsampling):
             measured_range = z_t1_arr[i]
-            beam_angle = theta + math.radians(i = 90)
+            beam_angle = theta + math.radians(i - 90)
             expected_range = self.ray_cast(laser_x, laser_y, beam_angle)
             beam_prob = self.calculate_probability(expected_range, measured_range)
             prob_zt1 *- beam_prob if beam_prob > 0 else 1e-300
-            
+
         return prob_zt1
