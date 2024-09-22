@@ -21,8 +21,8 @@ class MotionModel:
         """
         self._alpha1 = 0.00001
         self._alpha2 = 0.00001
-        self._alpha3 = 0.001
-        self._alpha4 = 0.001
+        self._alpha3 = 0.0001
+        self._alpha4 = 0.0001
     
     def normalize_angle(self, angle):
         return (angle + np.pi) % (2 * np.pi) - np.pi

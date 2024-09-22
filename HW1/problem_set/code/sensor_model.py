@@ -34,15 +34,15 @@ class SensorModel:
         The original numbers are for reference but HAVE TO be tuned.
         """
         self._z_hit = 1
-        self._z_short = 0.1
-        self._z_max = 0.1
-        self._z_rand = 100
+        self._z_short = 0.12
+        self._z_max = 0.05
+        self._z_rand = 800
 
-        self._sigma_hit = 50
+        self._sigma_hit = 100
         self._lambda_short = 0.1
 
         # Used in p_max and p_rand, optionally in ray casting
-        self._max_range = 1000
+        self._max_range = 8183
 
         # Used for thresholding obstacles of the occupancy map
         self._min_probability = 0.35
@@ -57,7 +57,7 @@ class SensorModel:
         self.resolution = 10
         self.offset = 25
     
-    def ray_cast(self, start_x, start_y, angle):
+    def ray_cast_uv(self, start_x, start_y, angle):
         end_x = start_x
         end_y = start_y
         x_idx = int(round(end_x/self.resolution))
@@ -86,7 +86,7 @@ class SensorModel:
         
         return total_prob
 
-    def beam_range_finder_model(self, z_t1_arr, x_t1):
+    def beam_range_finder_model_uv(self, z_t1_arr, x_t1):
         """
         param[in] z_t1_arr : laser range readings [array of 180 values] at time t
         param[in] x_t1 : particle state belief [x, y, theta] at time t [world_frame]
@@ -109,7 +109,7 @@ class SensorModel:
 
         return prob_zt1
 
-    def ray_casting_vectorized(self, start_x, start_y, angle):
+    def ray_casting(self, start_x, start_y, angle):
         x_map, y_map = int(start_x / self.resolution), int(start_y / self.resolution)
 
         if not self._is_in_map(x_map, y_map):
@@ -133,7 +133,7 @@ class SensorModel:
     def _is_in_map(self,x,y):
         return 0 <= x < self.map_width and 0 <= y < self.map_height
     
-    def beam_range_finder_model_vectorized(self, z_t1_arr, x_t1):
+    def beam_range_finder_model(self, z_t1_arr, x_t1):
         """
         Calculate the likelihood of a range scan at time t.
         
@@ -154,7 +154,7 @@ class SensorModel:
         for i in range(0, 180, self._subsampling):
             z = z_t1_arr[i]
             angle = theta + np.radians(i - 90)
-            z_star = self.ray_casting_vectorized(laser_x, laser_y, angle)
+            z_star = self.ray_casting(laser_x, laser_y, angle)
             
             p_hit = self._z_hit * norm.pdf(z, z_star, self._sigma_hit)
             p_short = self._z_short * self._lambda_short * np.exp(-self._lambda_short * z) if z <= z_star else 0
