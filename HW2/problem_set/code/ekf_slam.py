@@ -160,7 +160,40 @@ def predict(X, P, control, control_cov, k):
     \return P_pre Predicted P covariance of shape (3 + 2k, 3 + 2k).
     '''
 
-    return X, P
+    d = control[0,0]
+    alpha = control[1,0]
+
+    x = X[0,0]
+    y = X[1,0]
+    theta = X[2,0]
+
+    theta_new = warp2pi(theta + alpha)
+    x_new = x + d * np.cos(theta)
+    y_new = y + d * np.sin(theta)
+
+    X_pre = X.copy()
+    X_pre[0,0] = x_new
+    X_pre[1,0] = y_new
+    X_pre[2,0] = theta_new
+
+    G = np.eye(3 + 2*k)
+    G[0,2] = -d * np.sin(theta)
+    G[1,2] = d * np.cos(theta)
+
+    V = np.zeros(3,3)
+    V[0,0] = np.cos(theta)
+    V[0,1] = -d * np.sin(theta)
+    V[1,0] = np.sin(theta)
+    V[1,1] = d * np.cos(theta)
+    V[2,2] = 1
+
+    R = np.zeros((3 + 2*k, 3+2*k))
+    R[0:3, 0:3] = V @ control_cov @ V.T
+
+    P_pre = G @ P @ G.T + R
+
+
+    return X_pre, P_pre
 
 
 def update(X_pre, P_pre, measure, measure_cov, k):
