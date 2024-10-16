@@ -110,6 +110,40 @@ def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
     landmark = np.zeros((2 * k, 1))
     landmark_cov = np.zeros((2 * k, 2 * k))
 
+    x_t, y_t, theta_t = init_pose.flatten()
+    P_t = init_pose_cov
+
+    betas = init_measure[0::2, 0]
+    rs = init_measure[1::2, 0]
+
+    angles = theta_t * betas
+
+    lxs = x_t + rs * np.cos(angles)
+    lys = y_t + rs * np.sin(angles)
+
+    landmark[0::2, 0] = lxs
+    landmark[1::2, 0] = lys
+
+    for i in range(k):
+        beta_i = betas[i]
+        r_i = rs[i]
+        angle_i = angles[i]
+
+        H_i = np.array([
+            [1, 0, -r_i *np.sin(angle_i)],
+            [0, 1, r_i * np.cos(angle_i)]
+        ])
+
+        F_i = np.array([
+            [-r_i * np.sin(angle_i), np.cos(angle_i)],
+            [ r_i * np.cos(angle_i), np.sin(angle_i)]
+        ])
+
+        P_li = H_i @ P_t @ H_i.T + F_i @ init_measure_cov @ F_i.T
+
+        idx = 2*i
+        landmark_cov[idx: idx+2, idx:idx+2] = P_li
+
     return k, landmark, landmark_cov
 
 
