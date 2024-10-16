@@ -88,7 +88,7 @@ def warp2pi(angle_rad):
     """
     angle_rad = (angle_rad + np.pi) % (2 * np.pi) - np.pi
     if angle_rad <= -np.pi:
-        angle_rad += 2*np.pi
+        angle_rad += 2 * np.pi
     return angle_rad
 
 
@@ -110,27 +110,6 @@ def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
     landmark = np.zeros((2 * k, 1))
     landmark_cov = np.zeros((2 * k, 2 * k))
 
-    x = init_pose[0, 0]
-    y = init_pose[1, 0]
-    theta = init_pose[2, 0]
-    
-    for i in range(k):
-        beta = init_measure[2 * i, 0]
-        r = init_measure[2 * i + 1, 0]
-        
-        beta = warp2pi(beta + init_pose[2, 0])
-        landmark[2 * i, 0]     = x + r * np.cos(beta)
-        landmark[2 * i + 1, 0] = y + r * np.sin(beta)
-        J = np.array(
-            [
-                [-r * np.sin(beta + theta), np.cos(beta + theta)],
-                [r * np.cos(beta + theta), np.sin(beta + theta)]
-            ]
-        )
-        
-        landmark_cov[2 * i:2 * i + 2, 2 * i:2 * i + 2] = J @ init_measure_cov @ J.T
-    
-
     return k, landmark, landmark_cov
 
 
@@ -147,47 +126,7 @@ def predict(X, P, control, control_cov, k):
     \return P_pre Predicted P covariance of shape (3 + 2k, 3 + 2k).
     '''
 
-    # Extract control inputs
-    d = control[0, 0]          # Distance moved forward
-    alpha = control[1, 0]      # Rotation angle
-
-    # Extract current robot pose
-    x = X[0, 0]
-    y = X[1, 0]
-    theta = X[2, 0]
-
-    # Predict the new pose
-    x_new = x + d * np.cos(theta)
-    y_new = y + d * np.sin(theta)
-    theta_new = warp2pi(theta + alpha)
-
-    # Update the state vector
-    X_pre = X.copy()
-    X_pre[0, 0] = x_new
-    X_pre[1, 0] = y_new
-    X_pre[2, 0] = theta_new
-
-    # Compute the Jacobian of the motion model with respect to the state (G)
-    G = np.eye(3 + 2 * k)
-    G[0, 2] = -d * np.sin(theta)
-    G[1, 2] = d * np.cos(theta)
-
-    # Compute the Jacobian of the motion model with respect to the control (V)
-    V = np.zeros((3, 3))
-    V[0, 0] = np.cos(theta)
-    V[0, 1] = -d * np.sin(theta)
-    V[1, 0] = np.sin(theta)
-    V[1, 1] = d * np.cos(theta)
-    V[2, 2] = 1
-
-    # Rotate the control covariance into the global frame
-    R = np.zeros((3 + 2 * k, 3 + 2 * k))
-    R[0:3, 0:3] = V @ control_cov @ V.T
-
-    # Update the covariance matrix
-    P_pre = G @ P @ G.T + R
-
-    return X_pre, P_pre
+    return X, P
 
 
 def update(X_pre, P_pre, measure, measure_cov, k):
@@ -203,75 +142,8 @@ def update(X_pre, P_pre, measure, measure_cov, k):
     \return P Updated P covariance of shape (3 + 2k, 3 + 2k).
     '''
 
-    x = X_pre[0,0]
-    y = X_pre[1,0]
-    theta = X_pre[2,0]
+    return X_pre, P_pre
 
-    # Initialize matrices
-    Ht = np.zeros((2*k, 3 + 2*k))
-    Qt = np.zeros((2*k, 2*k))
-    Hu = np.zeros((2*k, 1))
-
-    # Build Ht, Qt, and Hu by iterating over each landmark
-    for i in range(k):
-        # Indexes for the current landmark in the state vector
-        idx = 3 + 2*i
-
-        # Landmark position estimate
-        l_x = X_pre[idx, 0]
-        l_y = X_pre[idx + 1, 0]
-
-        # Compute differences
-        delta_x = l_x - x
-        delta_y = l_y - y
-        q = delta_x**2 + delta_y**2
-        sqrt_q = np.sqrt(q)
-
-        # Compute expected measurement (h_i)
-        beta_hat = warp2pi(np.arctan2(delta_y, delta_x) - theta)
-        r_hat = sqrt_q
-        Hu[2 * i, 0] = beta_hat
-        Hu[2 * i + 1, 0] = r_hat
-
-        # Compute measurement Jacobian H_i
-        H_i = np.zeros((2, 3 + 2 * k))
-        # Derivatives with respect to robot pose
-        H_i[0, 0] = delta_y / q
-        H_i[0, 1] = -delta_x / q
-        H_i[0, 2] = -1
-        H_i[1, 0] = -delta_x / sqrt_q
-        H_i[1, 1] = -delta_y / sqrt_q
-        H_i[1, 2] = 0
-        # Derivatives with respect to landmark position
-        H_i[0, idx] = -delta_y / q
-        H_i[0, idx + 1] = delta_x / q
-        H_i[1, idx] = delta_x / sqrt_q
-        H_i[1, idx + 1] = delta_y / sqrt_q
-
-        # Place H_i into Ht
-        Ht[2 * i:2 * i + 2, :] = H_i
-
-        # Place measurement covariance into Qt
-        Qt[2 * i:2 * i + 2, 2 * i:2 * i + 2] = measure_cov
-
-    # Compute innovation (measurement residual)
-    z_diff = measure - Hu
-
-    # Wrap angle differences to [-pi, pi]
-    for i in range(k):
-        z_diff[2 * i, 0] = warp2pi(z_diff[2 * i, 0])
-
-    # Compute Kalman gain
-    S = Ht @ P_pre @ Ht.T + Qt
-    Kt = P_pre @ Ht.T @ np.linalg.inv(S)
-
-    # Update state estimate
-    X = X_pre + Kt @ z_diff
-
-    # Update covariance matrix
-    P = (np.eye(3 + 2 * k) - Kt @ Ht) @ P_pre
-
-    return X, P
 
 def evaluate(X, P, k):
     '''
