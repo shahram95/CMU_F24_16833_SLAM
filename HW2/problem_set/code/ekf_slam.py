@@ -110,6 +110,40 @@ def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
     landmark = np.zeros((2 * k, 1))
     landmark_cov = np.zeros((2 * k, 2 * k))
 
+    x_t, y_t, theta_t = init_pose.flatten()
+    P_t = init_pose_cov
+
+    betas = init_measure[0::2, 0]
+    rs = init_measure[1::2, 0]
+
+    angles = theta_t + betas
+
+    lxs = x_t + rs * np.cos(angles)
+    lys = y_t + rs * np.sin(angles)
+
+    landmark[0::2, 0] = lxs
+    landmark[1::2, 0] = lys
+
+    for i in range(k):
+        beta_i = betas[i]
+        r_i = rs[i]
+        angle_i = angles[i]
+
+        H_i = np.array([
+            [1, 0, -r_i * np.sin(angle_i)],
+            [0, 1,  r_i * np.cos(angle_i)]
+        ])
+
+        F_i = np.array([
+            [-r_i * np.sin(angle_i), np.cos(angle_i)],
+            [ r_i * np.cos(angle_i), np.sin(angle_i)]
+        ])
+
+        P_li = H_i @ P_t @ H_i.T * 0 + F_i @ init_measure_cov @ F_i.T
+
+        idx = 2 * i
+        landmark_cov[idx: idx + 2, idx: idx + 2] = P_li
+
     return k, landmark, landmark_cov
 
 
@@ -125,8 +159,34 @@ def predict(X, P, control, control_cov, k):
     \return X_pre Predicted X state of shape (3 + 2k, 1).
     \return P_pre Predicted P covariance of shape (3 + 2k, 3 + 2k).
     '''
+    d = control[0, 0]
+    alpha = control[1, 0]
 
-    return X, P
+    x = X[0, 0]
+    y = X[1, 0]
+    theta = X[2, 0]
+
+    X_pre = X.copy()
+    X_pre[0, 0] = x + d * np.cos(theta)
+    X_pre[1, 0] = y + d * np.sin(theta)
+    X_pre[2, 0] = warp2pi(theta + alpha)
+
+    G = np.eye(3 + 2 * k)
+    G[0, 2] = -d * np.sin(theta)
+    G[1, 2] = d * np.cos(theta)
+
+    R = np.zeros((3 + 2 * k, 3 + 2 * k))
+    Hr = np.array([
+        [np.cos(theta), -np.sin(theta), 0],
+        [np.sin(theta),  np.cos(theta), 0],
+        [0, 0, 1]
+    ])
+
+    R[:3, :3] = Hr @ control_cov @ Hr.T
+
+    P_pre = G @ P @ G.T + R
+
+    return X_pre, P_pre
 
 
 def update(X_pre, P_pre, measure, measure_cov, k):
@@ -142,7 +202,76 @@ def update(X_pre, P_pre, measure, measure_cov, k):
     \return P Updated P covariance of shape (3 + 2k, 3 + 2k).
     '''
 
-    return X_pre, P_pre
+    # Extract robot pose from X_pre
+    x = X_pre[0, 0]
+    y = X_pre[1, 0]
+    theta = X_pre[2, 0]
+
+    # Initialize matrices
+    Ht = np.zeros((2 * k, 3 + 2 * k))
+    Qt = np.zeros((2 * k, 2 * k))
+    Hu = np.zeros((2 * k, 1))
+
+    # Build Ht, Qt, and Hu by iterating over each landmark
+    for i in range(k):
+        # Indexes for the current landmark in the state vector
+        idx = 3 + 2 * i
+
+        # Landmark position estimate
+        l_x = X_pre[idx, 0]
+        l_y = X_pre[idx + 1, 0]
+
+        # Compute differences
+        delta_x = l_x - x
+        delta_y = l_y - y
+        q = delta_x**2 + delta_y**2
+        sqrt_q = np.sqrt(q)
+
+        # Compute expected measurement (h_i)
+        beta_hat = warp2pi(np.arctan2(delta_y, delta_x) - theta)
+        r_hat = sqrt_q
+        Hu[2 * i, 0] = beta_hat
+        Hu[2 * i + 1, 0] = r_hat
+
+        # Compute measurement Jacobian H_i
+        H_i = np.zeros((2, 3 + 2 * k))
+        # Derivatives with respect to robot pose
+        H_i[0, 0] = delta_y / q
+        H_i[0, 1] = -delta_x / q
+        H_i[0, 2] = -1
+        H_i[1, 0] = -delta_x / sqrt_q
+        H_i[1, 1] = -delta_y / sqrt_q
+        H_i[1, 2] = 0
+        # Derivatives with respect to landmark position
+        H_i[0, idx] = -delta_y / q
+        H_i[0, idx + 1] = delta_x / q
+        H_i[1, idx] = delta_x / sqrt_q
+        H_i[1, idx + 1] = delta_y / sqrt_q
+
+        # Place H_i into Ht
+        Ht[2 * i:2 * i + 2, :] = H_i
+
+        # Place measurement covariance into Qt
+        Qt[2 * i:2 * i + 2, 2 * i:2 * i + 2] = measure_cov
+
+    # Compute innovation (measurement residual)
+    z_diff = measure - Hu
+
+    # Wrap angle differences to [-pi, pi]
+    for i in range(k):
+        z_diff[2 * i, 0] = warp2pi(z_diff[2 * i, 0])
+
+    # Compute Kalman gain
+    S = Ht @ P_pre @ Ht.T + Qt
+    Kt = P_pre @ Ht.T @ np.linalg.inv(S)
+
+    # Update state estimate
+    X = X_pre + Kt @ z_diff
+
+    # Update covariance matrix
+    P = (np.eye(3 + 2 * k) - Kt @ Ht) @ P_pre
+
+    return X, P
 
 
 def evaluate(X, P, k):
