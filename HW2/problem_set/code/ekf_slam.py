@@ -111,23 +111,23 @@ def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
     landmark_cov = np.zeros((2 * k, 2 * k))
 
     x_t, y_t, theta_t = init_pose.flatten()
-    P_t = init_pose_cov
+    Sigma_t = init_pose_cov
 
-    betas = init_measure[0::2, 0]
-    rs = init_measure[1::2, 0]
+    beta_is = init_measure[0::2, 0]
+    r_is = init_measure[1::2, 0]
 
-    angles = theta_t + betas
+    angle_is = theta_t + beta_is
 
-    lxs = x_t + rs * np.cos(angles)
-    lys = y_t + rs * np.sin(angles)
+    l_xs = x_t + r_is * np.cos(angle_is)
+    l_ys = y_t + r_is * np.sin(angle_is)
 
-    landmark[0::2, 0] = lxs
-    landmark[1::2, 0] = lys
+    landmark[0::2, 0] = l_xs
+    landmark[1::2, 0] = l_ys
 
     for i in range(k):
-        beta_i = betas[i]
-        r_i = rs[i]
-        angle_i = angles[i]
+        beta_i = beta_is[i]
+        r_i = r_is[i]
+        angle_i = angle_is[i]
 
         H_i = np.array([
             [1, 0, -r_i * np.sin(angle_i)],
@@ -139,7 +139,7 @@ def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
             [ r_i * np.cos(angle_i), np.sin(angle_i)]
         ])
 
-        P_li = H_i @ P_t @ H_i.T * 0 + F_i @ init_measure_cov @ F_i.T
+        P_li = H_i @ Sigma_t @ H_i.T * 0 + F_i @ init_measure_cov @ F_i.T
 
         idx = 2 * i
         landmark_cov[idx: idx + 2, idx: idx + 2] = P_li
@@ -159,32 +159,32 @@ def predict(X, P, control, control_cov, k):
     \return X_pre Predicted X state of shape (3 + 2k, 1).
     \return P_pre Predicted P covariance of shape (3 + 2k, 3 + 2k).
     '''
-    d = control[0, 0]
-    alpha = control[1, 0]
+    d_t = control[0, 0]
+    alpha_t = control[1, 0]
 
-    x = X[0, 0]
-    y = X[1, 0]
-    theta = X[2, 0]
+    x_t = X[0, 0]
+    y_t = X[1, 0]
+    theta_t = X[2, 0]
 
     X_pre = X.copy()
-    X_pre[0, 0] = x + d * np.cos(theta)
-    X_pre[1, 0] = y + d * np.sin(theta)
-    X_pre[2, 0] = warp2pi(theta + alpha)
+    X_pre[0, 0] = x_t + d_t * np.cos(theta_t)
+    X_pre[1, 0] = y_t + d_t * np.sin(theta_t)
+    X_pre[2, 0] = warp2pi(theta_t + alpha_t)
 
-    G = np.eye(3 + 2 * k)
-    G[0, 2] = -d * np.sin(theta)
-    G[1, 2] = d * np.cos(theta)
+    F_t = np.eye(3 + 2 * k)
+    F_t[0, 2] = -d_t * np.sin(theta_t)
+    F_t[1, 2] = d_t * np.cos(theta_t)
 
-    R = np.zeros((3 + 2 * k, 3 + 2 * k))
-    Hr = np.array([
-        [np.cos(theta), -np.sin(theta), 0],
-        [np.sin(theta),  np.cos(theta), 0],
+    Q_t = np.zeros((3 + 2 * k, 3 + 2 * k))
+    G_t = np.array([
+        [np.cos(theta_t), -np.sin(theta_t), 0],
+        [np.sin(theta_t),  np.cos(theta_t), 0],
         [0, 0, 1]
     ])
 
-    R[:3, :3] = Hr @ control_cov @ Hr.T
+    Q_t[:3, :3] = G_t @ control_cov @ G_t.T
 
-    P_pre = G @ P @ G.T + R
+    P_pre = F_t @ P @ F_t.T + Q_t
 
     return X_pre, P_pre
 
@@ -201,77 +201,47 @@ def update(X_pre, P_pre, measure, measure_cov, k):
     \return X Updated X state of shape (3 + 2k, 1).
     \return P Updated P covariance of shape (3 + 2k, 3 + 2k).
     '''
+    robot_pose = X_pre[:3, 0]
+    
+    meas_jacobian = np.zeros((2 * k, 3 + 2 * k))
+    noise_matrix = np.zeros((2 * k, 2 * k))
+    expected_meas = np.zeros((2 * k, 1))
 
-    # Extract robot pose from X_pre
-    x = X_pre[0, 0]
-    y = X_pre[1, 0]
-    theta = X_pre[2, 0]
+    for lm_idx in range(k):
+        state_offset = 3 + 2 * lm_idx
 
-    # Initialize matrices
-    Ht = np.zeros((2 * k, 3 + 2 * k))
-    Qt = np.zeros((2 * k, 2 * k))
-    Hu = np.zeros((2 * k, 1))
+        lm_position = X_pre[state_offset:state_offset+2, 0]
 
-    # Build Ht, Qt, and Hu by iterating over each landmark
-    for i in range(k):
-        # Indexes for the current landmark in the state vector
-        idx = 3 + 2 * i
+        rel_pos = lm_position - robot_pose[:2]
+        sq_dist = np.sum(rel_pos**2)
+        dist = np.sqrt(sq_dist)
 
-        # Landmark position estimate
-        l_x = X_pre[idx, 0]
-        l_y = X_pre[idx + 1, 0]
+        angle_exp = warp2pi(np.arctan2(rel_pos[1], rel_pos[0]) - robot_pose[2])
+        range_exp = dist
+        expected_meas[2 * lm_idx:2 * lm_idx + 2, 0] = [angle_exp, range_exp]
 
-        # Compute differences
-        delta_x = l_x - x
-        delta_y = l_y - y
-        q = delta_x**2 + delta_y**2
-        sqrt_q = np.sqrt(q)
+        lm_jacobian = np.zeros((2, 3 + 2 * k))
 
-        # Compute expected measurement (h_i)
-        beta_hat = warp2pi(np.arctan2(delta_y, delta_x) - theta)
-        r_hat = sqrt_q
-        Hu[2 * i, 0] = beta_hat
-        Hu[2 * i + 1, 0] = r_hat
+        lm_jacobian[0, :3] = [rel_pos[1] / sq_dist, -rel_pos[0] / sq_dist, -1]
+        lm_jacobian[1, :3] = [-rel_pos[0] / dist, -rel_pos[1] / dist, 0]
 
-        # Compute measurement Jacobian H_i
-        H_i = np.zeros((2, 3 + 2 * k))
-        # Derivatives with respect to robot pose
-        H_i[0, 0] = delta_y / q
-        H_i[0, 1] = -delta_x / q
-        H_i[0, 2] = -1
-        H_i[1, 0] = -delta_x / sqrt_q
-        H_i[1, 1] = -delta_y / sqrt_q
-        H_i[1, 2] = 0
-        # Derivatives with respect to landmark position
-        H_i[0, idx] = -delta_y / q
-        H_i[0, idx + 1] = delta_x / q
-        H_i[1, idx] = delta_x / sqrt_q
-        H_i[1, idx + 1] = delta_y / sqrt_q
+        lm_jacobian[0, state_offset:state_offset+2] = [-rel_pos[1] / sq_dist, rel_pos[0] / sq_dist]
+        lm_jacobian[1, state_offset:state_offset+2] = [rel_pos[0] / dist, rel_pos[1] / dist]
 
-        # Place H_i into Ht
-        Ht[2 * i:2 * i + 2, :] = H_i
+        meas_jacobian[2 * lm_idx:2 * lm_idx + 2, :] = lm_jacobian
+        noise_matrix[2 * lm_idx:2 * lm_idx + 2, 2 * lm_idx:2 * lm_idx + 2] = measure_cov
 
-        # Place measurement covariance into Qt
-        Qt[2 * i:2 * i + 2, 2 * i:2 * i + 2] = measure_cov
+    meas_residual = measure - expected_meas
 
-    # Compute innovation (measurement residual)
-    z_diff = measure - Hu
+    for lm_idx in range(k):
+        meas_residual[2 * lm_idx, 0] = warp2pi(meas_residual[2 * lm_idx, 0])
 
-    # Wrap angle differences to [-pi, pi]
-    for i in range(k):
-        z_diff[2 * i, 0] = warp2pi(z_diff[2 * i, 0])
+    residual_cov = meas_jacobian @ P_pre @ meas_jacobian.T + noise_matrix
+    kalman_gain = P_pre @ meas_jacobian.T @ np.linalg.inv(residual_cov)
+    X_updated = X_pre + kalman_gain @ meas_residual
+    P_updated = (np.eye(3 + 2 * k) - kalman_gain @ meas_jacobian) @ P_pre
 
-    # Compute Kalman gain
-    S = Ht @ P_pre @ Ht.T + Qt
-    Kt = P_pre @ Ht.T @ np.linalg.inv(S)
-
-    # Update state estimate
-    X = X_pre + Kt @ z_diff
-
-    # Update covariance matrix
-    P = (np.eye(3 + 2 * k) - Kt @ Ht) @ P_pre
-
-    return X, P
+    return X_updated, P_updated
 
 
 def evaluate(X, P, k):
