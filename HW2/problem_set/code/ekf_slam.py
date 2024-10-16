@@ -7,6 +7,7 @@
 import numpy as np
 import re
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 np.set_printoptions(suppress=True, threshold=np.inf, linewidth=np.inf)
 
 
@@ -255,18 +256,108 @@ def evaluate(X, P, k):
     \return None
     '''
     l_true = np.array([3, 6, 3, 12, 7, 8, 7, 14, 11, 6, 11, 12], dtype=float)
-    plt.scatter(l_true[0::2], l_true[1::2])
+    plt.scatter(l_true[0::2], l_true[1::2], label='True Landmarks')
+    plt.scatter(X[3::2], X[4::2], color='red', marker='x', s=100, label='Estimated Landmarks')
     plt.draw()
     plt.waitforbuttonpress(0)
+
+    euclidean_distances = np.zeros(k)
+    mahalanobis_distances = np.zeros(k)
+
+    indices = np.arange(k) * 2
+    x_indices = 3 + indices
+    y_indices = x_indices + 1
+
+    dx = l_true[indices] - X[x_indices, 0]
+    dy = l_true[indices + 1] - X[y_indices, 0]
+    euclidean_distances = np.sqrt(dx**2 + dy**2)
+
+    for i in range(k):
+        difference_vector = np.array([dx[i], dy[i]])
+        covariance_matrix = P[x_indices[i]:y_indices[i]+1, x_indices[i]:y_indices[i]+1]
+        mahalanobis_distances[i] = np.sqrt(difference_vector @ covariance_matrix @ difference_vector.T)
+
+        print(f"the Euclidean distance of landmark {i + 1} is {euclidean_distances[i]}")
+        print(f"the Mahalanobis distance of landmark {i + 1} is {mahalanobis_distances[i]}")
 
 
 def main():
     # TEST: Setup uncertainty parameters
+    # sig_x = 0.25
+    # sig_y = 0.1
+    # sig_alpha = 0.1
+    # sig_beta = 0.01
+    # sig_r = 0.08
+
+    # Exp 1:
+    # sig_x = 2.5
+    # sig_y = 0.1
+    # sig_alpha = 0.1
+    # sig_beta = 0.01
+    # sig_r = 0.08
+
+    # Exp 2:
+    # sig_x = 0.025
+    # sig_y = 0.1
+    # sig_alpha = 0.1
+    # sig_beta = 0.01
+    # sig_r = 0.08
+
+    # Exp 3:
+    # sig_x = 0.25
+    # sig_y = 1.0
+    # sig_alpha = 0.1
+    # sig_beta = 0.01
+    # sig_r = 0.08
+
+    # # Exp 4:
+    # sig_x = 0.25
+    # sig_y = 0.01
+    # sig_alpha = 0.1
+    # sig_beta = 0.01
+    # sig_r = 0.08
+
+    # Exp 5:
+    # sig_x = 0.25
+    # sig_y = 0.1
+    # sig_alpha = 1.0
+    # sig_beta = 0.01
+    # sig_r = 0.08
+
+    # # Exp 6:
+    # sig_x = 0.25
+    # sig_y = 0.1
+    # sig_alpha = 0.01
+    # sig_beta = 0.01
+    # sig_r = 0.08
+
+    # Exp 7:
+    # sig_x = 0.25
+    # sig_y = 0.1
+    # sig_alpha = 0.1
+    # sig_beta = 0.1
+    # sig_r = 0.08
+
+    # # Exp 8:
+    # sig_x = 0.25
+    # sig_y = 0.1
+    # sig_alpha = 0.1
+    # sig_beta = 0.001
+    # sig_r = 0.08
+
+    # Exp 9:
+    # sig_x = 0.25
+    # sig_y = 0.1
+    # sig_alpha = 0.1
+    # sig_beta = 0.01
+    # sig_r = 0.8
+
+    # Exp 10:
     sig_x = 0.25
     sig_y = 0.1
     sig_alpha = 0.1
     sig_beta = 0.01
-    sig_r = 0.08
+    sig_r = 0.008
 
 
     # Generate variance from standard deviation
