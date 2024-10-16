@@ -86,6 +86,9 @@ def warp2pi(angle_rad):
     \param angle_rad Input angle in radius
     \return angle_rad_warped Warped angle to [-\pi, \pi].
     """
+    angle_rad = (angle_rad + np.pi) % (2 * np.pi) - np.pi
+    if angle_rad <= -np.pi:
+        angle_rad += 2*np.pi
     return angle_rad
 
 
