@@ -39,9 +39,12 @@ def solve_lu(A, b):
 def solve_lu_colamd(A, b):
     # TODO: return x, U s.t. Ax = b, and Permutation_rows A Permutation_cols = LU with reordered LU decomposition.
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.splu.html
-    N = A.shape[1]
-    x = np.zeros((N, ))
-    U = eye(N)
+    # N = A.shape[1]
+    # x = np.zeros((N, ))
+    # U = eye(N)
+    lu = splu(A.T @ A, permc_spec='COLAMD')
+    x = lu.solve(A.T @ b)
+    U = lu.U
     return x, U
 
 
