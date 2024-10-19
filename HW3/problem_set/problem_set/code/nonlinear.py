@@ -102,7 +102,7 @@ def compute_meas_obs_jacobian(x, i, j, n_poses):
     q = np.dot(delta, delta)
     sqrt_q = np.sqrt(q)
 
-    jacobian = p.array([
+    jacobian = np.array([
         [dy/q, -dx/q, -dy/q, dx/q],
         [-dx/sqrt_q, -dy/sqrt_q, dx/sqrt_q, dy/sqrt_q]
     ])
