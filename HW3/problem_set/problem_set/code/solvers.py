@@ -24,16 +24,16 @@ def solve_pinv(A, b):
     return x, None
 
 
-# def solve_lu(A, b):
-#     # TODO: return x, U s.t. Ax = b, and A = LU with LU decomposition.
-#     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.splu.html
-#     # N = A.shape[1]
-#     # x = np.zeros((N, ))
-#     # U = eye(N)
-#     lu = splu(A.T @ A, permc_spec='NATURAL')
-#     x = lu.solve(A.T @ b)
-#     U = lu.U
-#     return x, U
+def solve_lu(A, b):
+    # TODO: return x, U s.t. Ax = b, and A = LU with LU decomposition.
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.splu.html
+    # N = A.shape[1]
+    # x = np.zeros((N, ))
+    # U = eye(N)
+    lu = splu(A.T @ A, permc_spec='NATURAL')
+    x = lu.solve(A.T @ b)
+    U = lu.U
+    return x, U
 
 
 def solve_lu_colamd(A, b):
