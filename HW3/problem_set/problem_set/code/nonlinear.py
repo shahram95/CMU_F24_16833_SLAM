@@ -58,8 +58,8 @@ def odometry_estimation(x, i):
     \return odom Odometry (\Delta x, \Delta) in the shape (2, )
     '''
     # TODO: return odometry estimation
-    odom = np.zeros((2, ))
-
+    # odom = np.zeros((2, ))
+    odom = x[2*(i+1):2*(i+2)] - x[2*i:2*(i+1)]
     return odom
 
 
