@@ -18,8 +18,9 @@ def solve_default(A, b):
 
 def solve_pinv(A, b):
     # TODO: return x s.t. Ax = b using pseudo inverse.
-    N = A.shape[1]
-    x = np.zeros((N, ))
+    # N = A.shape[1]
+    # x = np.zeros((N, ))
+    x = inv(A.T @ A) @ A.T @ b
     return x, None
 
 
