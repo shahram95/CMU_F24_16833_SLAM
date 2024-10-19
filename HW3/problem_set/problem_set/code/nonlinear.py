@@ -93,7 +93,19 @@ def compute_meas_obs_jacobian(x, i, j, n_poses):
     \return jacobian Derived Jacobian matrix in the shape (2, 4)
     '''
     # TODO: return jacobian matrix
-    jacobian = np.zeros((2, 4))
+    # jacobian = np.zeros((2, 4))
+    pose = x[2*i:2*(i+1)]
+    landmark = x[2*n_poses + 2*j:2*n_poses + 2*(j+1)]
+    delta = landmark - pose
+    
+    dx, dy = delta
+    q = np.dot(delta, delta)
+    sqrt_q = np.sqrt(q)
+
+    jacobian = p.array([
+        [dy/q, -dx/q, -dy/q, dx/q],
+        [-dx/sqrt_q, -dy/sqrt_q, dx/sqrt_q, dy/sqrt_q]
+    ])
 
     return jacobian
 
