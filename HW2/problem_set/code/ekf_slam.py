@@ -140,7 +140,7 @@ def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
             [ r_i * np.cos(angle_i), np.sin(angle_i)]
         ])
 
-        P_li = H_i @ Sigma_t @ H_i.T * 0 + F_i @ init_measure_cov @ F_i.T
+        P_li = F_i @ init_measure_cov @ F_i.T
 
         idx = 2 * i
         landmark_cov[idx: idx + 2, idx: idx + 2] = P_li
@@ -260,6 +260,8 @@ def evaluate(X, P, k):
     plt.scatter(X[3::2], X[4::2], color='red', marker='x', s=100, label='Estimated Landmarks')
     plt.draw()
     plt.waitforbuttonpress(0)
+
+    # Added
 
     euclidean_distances = np.zeros(k)
     mahalanobis_distances = np.zeros(k)
