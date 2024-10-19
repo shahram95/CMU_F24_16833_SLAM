@@ -59,7 +59,7 @@ def odometry_estimation(x, i):
     '''
     # TODO: return odometry estimation
     # odom = np.zeros((2, ))
-    odom = x[2*(i+1):2*(i+2)] - x[2*i:2*(i+1)]
+    odom = x[2*(i+1):2*(i+2)] - x[2*i:2*(i+1)].flatten()
     return odom
 
 
@@ -138,10 +138,38 @@ def create_linear_system(x, odoms, observations, sigma_odom, sigma_observation,
     sqrt_inv_obs = np.linalg.inv(scipy.linalg.sqrtm(sigma_observation))
 
     # TODO: First fill in the prior to anchor the 1st pose at (0, 0)
+    A[0:2, 0:2] = np.eye(2)
 
     # TODO: Then fill in odometry measurements
+    H_odom = np.array([[-1, 0, 1, 0], [0, -1, 0, 1]])
+    weighted_H_odom = sqrt_inv_odom @ H_odom
+
+    for i in range(n_odom):
+        pose_idx = 2 * i
+        A[2*(i+1):2*(i+2), pose_idx:pose_idx+4] = weighted_H_odom
+        odom_error = odoms[i] - odometry_estimation(x, i)
+        b[2*(i+1):2*(i+2)] = sqrt_inv_odom @ odom_error
 
     # TODO: Then fill in landmark measurements
+    for i, obs in enumerate(observations):
+        pose_idx = int(obs[0])
+        landmark_idx = int(obs[1])
+        measurement = obs[2:]
+
+        H_obs = compute_meas_obs_jacobian(x, pose_idx, landmark_idx, n_poses)
+        weighted_H_obs = sqrt_inv_obs @ H_obs
+
+        row_idx = 2 * (n_odom + 1 + i)
+        col_pose_idx = 2 * pose_idx
+        col_landmark_idx = 2 * (n_poses + landmark_idx)
+
+        A[row_idx:row_idx+2, col_pose_idx:col_pose_idx+2] = weighted_H_obs[:, 0:2]
+        A[row_idx:row_idx+2, col_landmark_idx:col_landmark_idx+2] = weighted_H_obs[:, 2:4]
+
+        predicted_measurement = bearing_range_estimation(x, pose_idx, landmark_idx, n_poses)
+        measurement_error = measurement - predicted_measurement
+        measurement_error[0] = warp2pi(measurement_error[0])
+        b[row_idx:row_idx+2] = sqrt_inv_obs @ measurement_error
 
     return csr_matrix(A), b
 
@@ -152,7 +180,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--method',
         nargs='+',
-        choices=['default', 'pinv', 'qr', 'lu', 'qr_colamd', 'lu_colamd'],
+        choices=['default', 'pinv', 'qr', 'lu', 'qr_colamd', 'lu_colamd', 'lu_direct'],
         default=['default'],
         help='method')
 
