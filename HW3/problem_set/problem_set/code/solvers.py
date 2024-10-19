@@ -51,9 +51,11 @@ def solve_lu_colamd(A, b):
 def solve_qr(A, b):
     # TODO: return x, R s.t. Ax = b, and |Ax - b|^2 = |Rx - d|^2 + |e|^2
     # https://github.com/theNded/PySPQR
-    N = A.shape[1]
-    x = np.zeros((N, ))
-    R = eye(N)
+    # N = A.shape[1]
+    # x = np.zeros((N, ))
+    # R = eye(N)
+    z, R, _, _ = rz(A, b, permc_spec='NATURAL')
+    x = spsolve_triangular(R, z, lower=False)
     return x, R
 
 
