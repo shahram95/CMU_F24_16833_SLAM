@@ -62,9 +62,11 @@ def solve_qr(A, b):
 def solve_qr_colamd(A, b):
     # TODO: return x, R s.t. Ax = b, and |Ax - b|^2 = |R E^T x - d|^2 + |e|^2, with reordered QR decomposition (E is the permutation matrix).
     # https://github.com/theNded/PySPQR
-    N = A.shape[1]
-    x = np.zeros((N, ))
-    R = eye(N)
+    # N = A.shape[1]
+    # x = np.zeros((N, ))
+    # R = eye(N)
+    z, R, E, _ = rz(A, b, permc_spec='COLAMD')
+    x = permutation_vector_to_matrix(E) @ spsolve_triangular(R, z, lower=False)
     return x, R
 
 
