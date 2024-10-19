@@ -24,16 +24,16 @@ def solve_pinv(A, b):
     return x, None
 
 
-def solve_lu(A, b):
-    # TODO: return x, U s.t. Ax = b, and A = LU with LU decomposition.
-    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.splu.html
-    # N = A.shape[1]
-    # x = np.zeros((N, ))
-    # U = eye(N)
-    lu = splu(A.T @ A, permc_spec='NATURAL')
-    x = lu.solve(A.T @ b)
-    U = lu.U
-    return x, U
+# def solve_lu(A, b):
+#     # TODO: return x, U s.t. Ax = b, and A = LU with LU decomposition.
+#     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.splu.html
+#     # N = A.shape[1]
+#     # x = np.zeros((N, ))
+#     # U = eye(N)
+#     lu = splu(A.T @ A, permc_spec='NATURAL')
+#     x = lu.solve(A.T @ b)
+#     U = lu.U
+#     return x, U
 
 
 def solve_lu_colamd(A, b):
@@ -69,6 +69,43 @@ def solve_qr_colamd(A, b):
     x = permutation_vector_to_matrix(E) @ spsolve_triangular(R, z, lower=False)
     return x, R
 
+def solve_lu_direct(A, b):
+    """
+    [Bonus question]: Solve the linear system Ax = b using LU decomposition with custom forward/backward substitution.
+    
+    Args:
+    A (csc_matrix): The coefficient matrix
+    b (numpy.ndarray): The right-hand side vector
+    
+    Returns:
+    x (numpy.ndarray): The solution vector
+    U (csc_matrix): The upper triangular matrix from LU decomposition
+    """
+
+    ATA = A.T @ A
+    ATb = A.T @ b
+
+    lu_decomposition = splu(ATA, permc_spec='NATURAL')
+    L = lu_decomposition.L
+    U = lu_decomposition.U
+
+    n = A.shape[1]
+    y = np.zeros(n)
+    x = np.zeros(n)
+
+    for i in range(n):
+        y[i] = ATb[i]
+        for j in range(i):
+            y[i] -= L[i, j] * y[j]
+        y[i] /= L[i, i]
+
+    for i in range(n - 1, -1, -1):
+        x[i] = y[i]
+        for j in range(i + 1, n):
+            x[i] -= U[i, j] * x[j]
+        x[i] /= U[i, i]
+
+    return x, U
 
 def solve(A, b, method='default'):
     '''
