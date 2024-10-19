@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 import unittest
-from solvers import solve_pinv, solve_lu, solve_lu_colamd, solve_qr
+from solvers import solve_pinv, solve_lu, solve_lu_colamd, solve_qr, solve_qr_colamd
 
 class TestSolvers(unittest.TestCase):
     def setUp(self):
@@ -33,6 +33,13 @@ class TestSolvers(unittest.TestCase):
         result1 = np.allclose(self.A @ x, self.b, atol=1e-6)
         result2 = R.shape[0] == R.shape[1]  # Check if R is square
         print(f"solve_qr test {'passed' if result1 and result2 else 'failed'}")
+        self.assertTrue(result1 and result2)
+    
+    def test_solve_qr_colamd(self):
+        x, R = solve_qr_colamd(self.A, self.b)
+        result1 = np.allclose(self.A @ x, self.b, atol=1e-6)
+        result2 = R.shape[0] == R.shape[1]  # Check if R is square
+        print(f"solve_qr_colamd test {'passed' if result1 and result2 else 'failed'}")
         self.assertTrue(result1 and result2)
 
 if __name__ == '__main__':
