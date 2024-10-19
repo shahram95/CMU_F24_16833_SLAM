@@ -41,10 +41,34 @@ def create_linear_system(odoms, observations, sigma_odom, sigma_observation,
     sqrt_inv_obs = np.linalg.inv(scipy.linalg.sqrtm(sigma_observation))
 
     # TODO: First fill in the prior to anchor the 1st pose at (0, 0)
+    A[0:2, 0:2] = np.eye(2)
 
     # TODO: Then fill in odometry measurements
+    odom_jacobian = np.array([[-1, 0, 1, 0], [0, -1, 0, 1]])
+    weighted_odom_jacobian = sqrt_inv_odom @ odom_jacobian
+
+    for i in range(n_odom):
+        row_start = 2 * (i + 1)
+        col_start = 2 * i
+        A[row_start:row_start+2, col_start:col_start+4] = weighted_odom_jacobian
+        b[row_start:row_start+2] = sqrt_inv_odom @ odoms[i]
 
     # TODO: Then fill in landmark measurements
+    obs_jacobian = np.array([[-1, 0, 1, 0], [0, -1, 0, 1]])
+    weighted_obs_jacobian = sqrt_inv_obs @ obs_jacobian
+
+    for i in range(n_obs):
+        pose_idx = int(observations[i, 0])
+        landmark_idx = int(observations[i, 1])
+        measurement = observations[i, 2:]
+
+        row_start = 2 * (n_odom + 1 + i)
+        pose_col_start = 2 * pose_idx
+        landmark_col_start = 2 * (n_poses + landmark_idx)
+
+        A[row_start:row_start+2, pose_col_start:pose_col_start+2] = weighted_obs_jacobian[:, 0:2]
+        A[row_start:row_start+2, landmark_col_start:landmark_col_start+2] = weighted_obs_jacobian[:, 2:]
+        b[row_start:row_start+2] = sqrt_inv_obs @ measurement
 
     return csr_matrix(A), b
 
