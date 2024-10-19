@@ -72,7 +72,14 @@ def bearing_range_estimation(x, i, j, n_poses):
     \return obs Observation from pose i to landmark j (theta, d) in the shape (2, )
     '''
     # TODO: return bearing range estimations
-    obs = np.zeros((2, ))
+    # obs = np.zeros((2, ))
+    pose =x[2*i:2*(i+1)]
+    landmark = x[2*n_poses + 2*j:2*n_poses + 2*(j+1)]
+    delta = landmark - pose
+    theta = np.arctan2(delta[1], delta[0])
+    distance = np.linalg.norm(delta)
+
+    obs = np.array([warp2pi(theta), distance])
 
     return obs
 
