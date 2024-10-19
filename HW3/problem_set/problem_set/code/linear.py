@@ -79,7 +79,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--method',
         nargs='+',
-        choices=['default', 'pinv', 'qr', 'lu', 'qr_colamd', 'lu_colamd'],
+        choices=['default', 'pinv', 'qr', 'lu', 'qr_colamd', 'lu_colamd', 'lu_direct'],
         default=['default'],
         help='method')
     parser.add_argument(

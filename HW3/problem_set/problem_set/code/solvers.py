@@ -122,6 +122,7 @@ def solve(A, b, method='default'):
         'qr': solve_qr,
         'lu_colamd': solve_lu_colamd,
         'qr_colamd': solve_qr_colamd,
+        'lu_direct': solve_lu_direct,
     }
 
     return fn_map[method](A, b)
