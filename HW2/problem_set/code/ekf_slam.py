@@ -140,7 +140,7 @@ def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
             [ r_i * np.cos(angle_i), np.sin(angle_i)]
         ])
 
-        P_li = F_i @ init_measure_cov @ F_i.T
+        P_li = H_i @ init_pose_cov @ H_i.T + F_i @ init_measure_cov @ F_i.T
 
         idx = 2 * i
         landmark_cov[idx: idx + 2, idx: idx + 2] = P_li
@@ -320,11 +320,11 @@ def main():
     # sig_r = 0.08
 
     # Exp 5:
-    # sig_x = 0.25
-    # sig_y = 0.1
-    # sig_alpha = 1.0
-    # sig_beta = 0.01
-    # sig_r = 0.08
+    sig_x = 0.25
+    sig_y = 0.1
+    sig_alpha = 1.0
+    sig_beta = 0.01
+    sig_r = 0.08
 
     # # Exp 6:
     # sig_x = 0.25
@@ -355,11 +355,11 @@ def main():
     # sig_r = 0.8
 
     # Exp 10:
-    sig_x = 0.25
-    sig_y = 0.1
-    sig_alpha = 0.1
-    sig_beta = 0.01
-    sig_r = 0.008
+    # sig_x = 0.25
+    # sig_y = 0.1
+    # sig_alpha = 0.1
+    # sig_beta = 0.01
+    # sig_r = 0.008
 
 
     # Generate variance from standard deviation
