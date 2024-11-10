@@ -1,0 +1,12 @@
+\BOOKMARK [1][-]{section.1}{Overview}{}% 1
+\BOOKMARK [1][-]{section.2}{Iterative Closest Point \(ICP\) \(50 points\)}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Projective data association}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Linearization}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Optimization}{section.2}% 5
+\BOOKMARK [1][-]{section.3}{Point-based Fusion \(40 points\)}{}% 6
+\BOOKMARK [2][-]{subsection.3.1}{Filter}{section.3}% 7
+\BOOKMARK [2][-]{subsection.3.2}{Merge}{section.3}% 8
+\BOOKMARK [2][-]{subsection.3.3}{Addition}{section.3}% 9
+\BOOKMARK [2][-]{subsection.3.4}{Results}{section.3}% 10
+\BOOKMARK [1][-]{section.4}{The dense SLAM system \(20 points + 10 points\)}{}% 11
+\BOOKMARK [1][-]{section.5}{Code Submission Rules}{}% 12

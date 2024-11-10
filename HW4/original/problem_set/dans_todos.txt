@@ -1,0 +1,10 @@
+Remove reference to angle threshold in 2.1
+
+Section 3.2 make explicit the definitions of weight as used in the handout, 
+self.weights as used in the code, 
+and the names of these as used in the Point Based Fusion Paper
+
+Add traj visualization to solution writeup
+
+For the ICP question have students run ICP between 10 and 100 for 10 iters and for 100 iters
+
