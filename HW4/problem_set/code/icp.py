@@ -85,6 +85,11 @@ def build_linear_system(source_points, target_points, target_normals, T):
     b = np.zeros((M, ))
 
     # TODO: build the linear system
+    A[:, 0] = n_q[:, 2] * p_prime[:, 1] - n_q[:, 1] * p_prime[:, 2]  # Cross product terms
+    A[:, 1] = n_q[:, 0] * p_prime[:, 2] - n_q[:, 2] * p_prime[:, 0]
+    A[:, 2] = n_q[:, 1] * p_prime[:, 0] - n_q[:, 0] * p_prime[:, 1]
+    A[:, 3:] = n_q  # Normal components
+    b = -np.sum(n_q * (p_prime - q), axis=1)
     # End of TODO
 
     return A, b
