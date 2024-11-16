@@ -137,7 +137,11 @@ def solve(A, b):
     \return delta (6, ) vector by solving the linear system. You may directly use dense solvers from numpy.
     '''
     # TODO: write your relevant solver
-    return np.zeros((6, ))
+    # return np.zeros((6, ))
+    Q, R = np.linalg.qr(A)
+    d = np.dot(Q.T, b)
+    x = np.dot(np.linalg.inv(R), d)
+    return x
 
 
 def icp(source_points,
@@ -202,7 +206,7 @@ if __name__ == '__main__':
     parser.add_argument('--target_idx',
                         type=int,
                         help='index to the source depth/normal maps',
-                        default=50)
+                        default=100)
     args = parser.parse_args()
 
     intrinsic_struct = o3d.io.read_pinhole_camera_intrinsic('intrinsics.json')
