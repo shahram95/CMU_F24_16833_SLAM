@@ -22,6 +22,9 @@ class Map:
         self.colors = np.empty((0, 3))
         self.weights = np.empty((0, 1))
         self.initialized = False
+        self.point_timestamps = np.empty((0, 1))
+        self.current_frame = 0
+        self.stale_threshold = 35
 
     def merge(self, indices, points, normals, colors, R, t):
         '''
@@ -43,6 +46,9 @@ class Map:
         self.normals[indices] /= np.linalg.norm(self.normals[indices], axis=1, keepdims=True)
         self.colors[indices] = (weights * self.colors[indices] + colors) / (weights + 1)
         self.weights[indices] += 1
+        self.point_timestamps[indices] = self.current_frame
+        self.remove_old_points()
+        self.current_frame += 1
 
     def add(self, points, normals, colors, R, t):
         '''
@@ -58,10 +64,28 @@ class Map:
         points_world = (R @ points.T + t).T
         normals_world = (R @ normals.T).T
         new_weights = np.ones((points.shape[0], 1))
+        new_timestamps = self.current_frame * np.ones((points.shape[0], 1))
         self.points = np.concatenate((self.points, points_world), axis=0)
         self.normals = np.concatenate((self.normals, normals_world), axis=0)
         self.colors = np.concatenate((self.colors, colors), axis=0)
         self.weights = np.concatenate((self.weights, new_weights), axis=0)
+        self.point_timestamps = np.concatenate((self.point_timestamps, new_timestamps), axis=0)
+    
+    def remove_old_points(self):
+        age = self.current_frame - self.point_timestamps
+        active = (age < self.stale_threshold).flatten()
+        self.points = self.points[active]
+        self.normals = self.normals[active]
+        self.colors = self.colors[active]
+        self.weights = self.weights[active]
+        self.point_timestamps = self.point_timestamps[active]
+
+    def get_reliable_points(self, ratio=0.1):
+        if len(self.points) == 0:
+            return None, None, None
+        k = int(len(self.points) * ratio)
+        idx = np.argsort(self.weights.flatten())[-k:]
+        return self.points[idx], self.normals[idx], self.colors[idx]
 
     def filter_pass1(self, us, vs, ds, h, w):
         '''

@@ -16,6 +16,7 @@ import o3d_utility
 from preprocess import load_gt_poses
 from icp import icp
 from fusion import Map
+#from fusion import Map
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
